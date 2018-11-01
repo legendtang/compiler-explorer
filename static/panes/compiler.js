@@ -412,7 +412,8 @@ Compiler.prototype.findTools = function (content, tools) {
             (content.componentState.compiler === this.id)) {
             tools.push({
                 id: content.componentState.toolId,
-                args: content.componentState.args
+                args: content.componentState.args,
+                queryContent: content.componentState.queryContent
             });
         }
     } else if (content.content) {
@@ -431,7 +432,8 @@ Compiler.prototype.getActiveTools = function (newToolSettings) {
     if (newToolSettings) {
         tools.push({
             id: newToolSettings.toolId,
-            args: newToolSettings.args
+            args: newToolSettings.args,
+            queryContent: newToolSettings.queryContent
         });
     }
 
@@ -707,6 +709,10 @@ Compiler.prototype.onToolOpened = function (compilerId, toolSettings) {
         var toolId = toolSettings.toolId;
         if (toolId === "clangtidytrunk") {
             this.clangtidyToolButton.prop('disabled', true);
+        } else if (toolId === "clangquerytrunk") {
+            this.clangqueryToolButton.prop('disabled', true);
+        } else if (toolId === "clangquery6") {
+            this.clangquery6ToolButton.prop('disabled', true);
         } else if (toolId === "llvm-mcatrunk") {
             this.llvmmcaToolButton.prop('disabled', true);
         } else if (toolId === "pahole") {
@@ -722,6 +728,10 @@ Compiler.prototype.onToolClosed = function (compilerId, toolSettings) {
         var toolId = toolSettings.toolId;
         if (toolId === "clangtidytrunk") {
             this.clangtidyToolButton.prop('disabled', !this.supportsTool(toolId));
+        } else if (toolId === "clangquerytrunk") {
+            this.clangqueryToolButton.prop('disabled', !this.supportsTool(toolId));
+        } else if (toolId === "clangquery6") {
+            this.clangquery6ToolButton.prop('disabled', !this.supportsTool(toolId));
         } else if (toolId === "llvm-mcatrunk") {
             this.llvmmcaToolButton.prop('disabled', !this.supportsTool(toolId));
         } else if (toolId === "pahole") {
@@ -960,10 +970,14 @@ Compiler.prototype.initToolButton = function (togglePannerAdder, button, toolId)
 
 Compiler.prototype.initToolButtons = function (togglePannerAdder) {
     this.clangtidyToolButton = this.domRoot.find('.view-clangtidytool');
+    this.clangqueryToolButton = this.domRoot.find('.view-clangquerytool');
+    this.clangquery6ToolButton = this.domRoot.find('.view-clangquery6tool');
     this.llvmmcaToolButton = this.domRoot.find('.view-llvmmcatool');
     this.paholeToolButton = this.domRoot.find('.view-pahole');
 
     this.initToolButton(togglePannerAdder, this.clangtidyToolButton, "clangtidytrunk");
+    this.initToolButton(togglePannerAdder, this.clangqueryToolButton, "clangquerytrunk");
+    this.initToolButton(togglePannerAdder, this.clangquery6ToolButton, "clangquery6");
     this.initToolButton(togglePannerAdder, this.llvmmcaToolButton, "llvm-mcatrunk");
     this.initToolButton(togglePannerAdder, this.paholeToolButton, "pahole");
 };
@@ -1012,6 +1026,10 @@ Compiler.prototype.updateButtons = function () {
     var activeTools = this.getActiveTools();
     this.clangtidyToolButton.prop('disabled',
         !(this.supportsTool("clangtidytrunk") && !this.isToolActive(activeTools, "clangtidytrunk")));
+    this.clangqueryToolButton.prop('disabled',
+        !(this.supportsTool("clangquerytrunk") && !this.isToolActive(activeTools, "clangquerytrunk")));
+    this.clangquery6ToolButton.prop('disabled',
+        !(this.supportsTool("clangquery6") && !this.isToolActive(activeTools, "clangquery6")));
     this.llvmmcaToolButton.prop('disabled',
         !(this.supportsTool("llvm-mcatrunk") && !this.isToolActive(activeTools, "llvm-mcatrunk")));
     this.paholeToolButton.prop('disabled',

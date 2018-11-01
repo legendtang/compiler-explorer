@@ -239,6 +239,10 @@ pre.content.wrap {
     left: 3px;
 }
 
+.selected-srcloc {
+    background: #4477AA;
+}
+
 .linked-code-decoration-inline {
     font-weight: 600;
 }

@@ -714,16 +714,19 @@ Editor.prototype.onSelectLine = function (id, lineNum) {
     }
 };
 
-Editor.prototype.onEditorSetDecoration = function (id, lineNum, reveal) {
+Editor.prototype.onEditorSetDecoration = function (id, lineNum, reveal, colNum, endLineNum, endColNum) {
+
+    if (colNum == 0)
+        colNum = 1;
+
     if (Number(id) === this.id) {
         if (reveal && lineNum)
             this.editor.revealLineInCenter(lineNum);
+        var highlightRange = new monaco.Range(lineNum, colNum, endLineNum ? endLineNum : lineNum, endColNum ? endColNum + 1 : colNum + 1);
         this.decorations.linkedCode = lineNum === -1 || !lineNum ? [] : [{
-            range: new monaco.Range(lineNum, 1, lineNum, 1),
+            range: highlightRange,
             options: {
-                isWholeLine: true,
-                linesDecorationsClassName: 'linked-code-decoration-margin',
-                inlineClassName: 'linked-code-decoration-inline'
+                inlineClassName: 'selected-srcloc'
             }
         }];
         this.updateDecorations();

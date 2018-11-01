@@ -136,6 +136,12 @@
           button.dropdown-item.btn.btn-light.btn-sm.view-clangtidytool(title="Clang-tidy")
             span.fas.fa-cog
             | &nbsp;Clang-tidy
+          button.dropdown-item.btn.btn-light.btn-sm.view-clangquerytool(title="Clang-query-future")
+            span.fas.fa-cogs
+            | &nbsp;Clang-query-future
+          button.dropdown-item.btn.btn-light.btn-sm.view-clangquery6tool(title="Clang-query-trunk")
+            span.fas.fa-cogs
+            | &nbsp;Clang-query-trunk
           button.dropdown-item.btn.btn-light.btn-sm.view-llvmmcatool(title="LLVM MCA")
             span.fas.fa-cog
             | &nbsp;LLVM MCA
@@ -185,6 +191,7 @@
               span Wrap lines
             input.d-none(type="checkbox" checked=false)
           input.options.form-control(type="text" placeholder="Tool options..." size="256" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false")
+    .monaco-placeholder
     pre.content
 
   #diff

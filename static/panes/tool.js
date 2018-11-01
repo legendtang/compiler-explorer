@@ -26,6 +26,7 @@
 
 var _ = require('underscore');
 var $ = require('jquery');
+var monaco = require('../monaco');
 var FontScale = require('../fontscale');
 var AnsiToHtml = require('../ansi-to-html');
 var Toggles = require('../toggles');
@@ -61,12 +62,27 @@ function Tool(hub, container, state) {
     this.errorAnsiToHtml = makeAnsiToHtml('red');
 
     this.optionsField = this.domRoot.find('input.options');
+    this.queryContent = monaco.editor.create(this.domRoot.find(".monaco-placeholder")[0], {
+        value: "",
+        scrollBeyondLastLine: false,
+        language: 'plaintext',
+        readOnly: false,
+        glyphMargin: true,
+        fontFamily: 'Consolas, "Liberation Mono", Courier, monospace',
+        quickSuggestions: false,
+        fixedOverflowWidgets: true,
+        minimap: {
+            maxColumn: 80
+        },
+        lineNumbersMinChars: 3
+    });
 
     this.initButtons();
     this.options = new Toggles(this.domRoot.find('.options'), state);
     this.options.on('change', _.bind(this.onOptionsChange, this));
 
     this.initArgs(state);
+    this.initQueryContent(state);
 
     this.container.on('resize', this.resize, this);
     this.container.on('shown', this.resize, this);
@@ -105,9 +121,36 @@ Tool.prototype.initArgs = function (state) {
     }
 };
 
+Tool.prototype.initQueryContent = function (state) {
+    if (this.queryContent) {
+
+        var optionsChange = _.debounce(_.bind(function (e) {
+            this.onOptionsChange();
+            this.eventHub.emit('toolSettingsChange', this.compilerId);
+        }, this), 800);
+
+        this.queryContent.model.onDidChangeContent((event) => {
+            optionsChange();
+        });
+
+        if (state.queryContent) {
+
+            this.queryContent.setValue(state.queryContent);
+        }
+    }
+};
+
 Tool.prototype.getInputArgs = function () {
     if (this.optionsField) {
         return this.optionsField.val();
+    } else {
+        return "";
+    }
+};
+
+Tool.prototype.getQueryContent = function () {
+    if (this.queryContent) {
+        return this.queryContent.getModel().getValue();
     } else {
         return "";
     }
@@ -118,7 +161,15 @@ Tool.prototype.getEffectiveOptions = function () {
 };
 
 Tool.prototype.resize = function () {
-    this.contentRoot.height(this.domRoot.height() - this.optionsToolbar.height() - 5);
+
+    var queryCommandLineHeight = 200;
+
+    this.queryContent.layout({
+        width: this.domRoot.width(),
+        height: queryCommandLineHeight
+    });
+
+    this.contentRoot.height(this.domRoot.height() - this.optionsToolbar.height() - 5 - queryCommandLineHeight);
 };
 
 Tool.prototype.onOptionsChange = function () {
@@ -141,7 +192,8 @@ Tool.prototype.currentState = function () {
         editor: this.editorId,
         wrap: options.wrap,
         toolId: this.toolId,
-        args: this.getInputArgs()
+        args: this.getInputArgs(),
+        queryContent: this.getQueryContent()
     };
     this.fontScale.addState(state);
     return state;
@@ -166,7 +218,11 @@ Tool.prototype.onCompileResult = function (id, compiler, result) {
 
     if (toolResult) {
         _.each((toolResult.stdout || []).concat(toolResult.stderr || []), function (obj) {
-            this.add(this.normalAnsiToHtml.toHtml(obj.text), obj.tag ? obj.tag.line : obj.line);
+            this.add(this.normalAnsiToHtml.toHtml(obj.text),
+                obj.tag ? obj.tag.line : obj.line,
+                obj.tag ? obj.tag.column : undefined,
+                obj.tag ? obj.tag.endLine : undefined,
+                obj.tag ? obj.tag.endCol : undefined);
         }, this);
     
         this.toolName = toolResult.name;
@@ -182,7 +238,7 @@ Tool.prototype.onCompileResult = function (id, compiler, result) {
     }
 };
 
-Tool.prototype.add = function (msg, lineNum) {
+Tool.prototype.add = function (msg, lineNum, colNum, endLineNum, endColNum) {
     var elem = $('<p></p>').appendTo(this.contentRoot);
     if (lineNum) {
         elem.html(
@@ -190,16 +246,19 @@ Tool.prototype.add = function (msg, lineNum) {
                 .prop('href', 'javascript:;')
                 .html(msg)
                 .click(_.bind(function (e) {
-                    this.eventHub.emit('editorSetDecoration', this.editorId, lineNum, true);
+                    this.eventHub.emit('editorSetDecoration', this.editorId, lineNum, true, colNum, endLineNum, endColNum);
                     e.preventDefault();
                     return false;
                 }, this))
                 .on('mouseover', _.bind(function () {
-                    this.eventHub.emit('editorSetDecoration', this.editorId, lineNum, false);
+                    this.eventHub.emit('editorSetDecoration', this.editorId, lineNum, false, colNum, endLineNum, endColNum);
                 }, this))
         );
     } else {
-        elem.html(msg);
+        if (msg == "")
+            elem.html("<br/>");
+        else
+            elem.html(msg);
     }
 };
 
@@ -221,6 +280,7 @@ Tool.prototype.onCompilerClose = function (id) {
 Tool.prototype.close = function () {
     this.eventHub.emit('toolClosed', this.compilerId, this.currentState());
     this.eventHub.unsubscribe();
+    this.queryContent.dispose();
 };
 
 module.exports = {
