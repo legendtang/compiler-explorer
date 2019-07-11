@@ -49,7 +49,7 @@ function applyColours(editor, colours, schemeName, prevDecorations) {
             }
         };
     });
-    // return editor.deltaDecorations(prevDecorations, newDecorations);
+    return editor.deltaDecorations(prevDecorations, newDecorations);
 }
 
 module.exports = {
